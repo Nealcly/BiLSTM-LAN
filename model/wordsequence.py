@@ -61,7 +61,7 @@ class WordSequence(nn.Module):
         self.self_attention_first = multihead_attention(data.HP_hidden_dim,num_heads=data.num_attention_head, dropout_rate=data.HP_dropout, gpu=self.gpu)
         # DO NOT Add dropout at last layer
         self.self_attention_last = multihead_attention(data.HP_hidden_dim,num_heads=1, dropout_rate=0, gpu=self.gpu)
-        self.lstm_attention_stack =  nn.ModuleList([LSTM_attention(lstm_hidden,self.bilstm_flag,data) for _ in range(int(self.num_of_lstm_layer))])
+        self.lstm_attention_stack =  nn.ModuleList([LSTM_attention(lstm_hidden,self.bilstm_flag,data) for _ in range(int(self.num_of_lstm_layer)-2)])
         #highway encoding
         #self.highway_encoding = HighwayEncoding(data,data.HP_hidden_dim,activation_function=F.relu)
 
@@ -89,7 +89,7 @@ class WordSequence(nn.Module):
                 Variable(batch_size, sent_len, hidden_dim)
         """
         word_represent, label_embs = self.wordrep(word_inputs,feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover,input_label_seq_tensor)
-        #word_represent shape [batch_size,seq_length,word_embedding_dim+char_hidden_dim]
+        #word_represent shape [batch_size, seq_length, word_embedding_dim+char_hidden_dim]
         # word_embs (batch_size, seq_len, embed_size)
         # label_embs = self.highway_encoding(label_embs)
         """
@@ -103,12 +103,12 @@ class WordSequence(nn.Module):
         # shape [seq_len, batch, hidden_size]
         lstm_out = self.droplstm(lstm_out.transpose(1, 0))
         attention_label = self.self_attention_first(lstm_out, label_embs, label_embs)
-        # shape [batch_size,seq_length,embedding_dim]
+        # shape [batch_size, seq_length, embedding_dim]
         lstm_out = torch.cat([lstm_out, attention_label], -1)
-        #shape [batch_size,seq_length,embedding_dim + label_embeeding_dim]
+        #shape [batch_size, seq_length, embedding_dim + label_embeeding_dim]
+
         for layer in self.lstm_attention_stack:
             lstm_out = layer(lstm_out,label_embs,word_seq_lengths,hidden)
-
         """
         Last Layer 
         Attention weight calculate loss
@@ -118,6 +118,5 @@ class WordSequence(nn.Module):
         lstm_out, _ = pad_packed_sequence(lstm_out)
         lstm_out = self.droplstm(lstm_out.transpose(1, 0))
         lstm_out = self.self_attention_last(lstm_out, label_embs, label_embs,True)
-
         return lstm_out
 

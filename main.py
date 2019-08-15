@@ -455,12 +455,11 @@ if __name__ == '__main__':
     parser.add_argument('--train_dir', default='wsj_pos/train.pos', help='train_file')
     parser.add_argument('--dev_dir', default='wsj_pos/dev.pos', help='dev_file')
     parser.add_argument('--test_dir', default='wsj_pos/test.pos', help='test_file')
-    parser.add_argument('--model_dir', default='./sample/label_embedding', help='model_file')
-    # parser.add_argument('--model_dir', default='wsj_pos/label_embedding', help='model_file')
+    parser.add_argument('--model_dir', default='wsj_pos/label_embedding', help='model_file')
     parser.add_argument('--seg', default=False)
 
     parser.add_argument('--word_emb_dir', default='glove.6B.100d.txt', help='word_emb_dir')
-    #parser.add_argument('--word_emb_dir', default='', help='word_emb_dir')
+    # parser.add_argument('--word_emb_dir', default='', help='word_emb_dir')
     parser.add_argument('--norm_word_emb', default = False)
     parser.add_argument('--norm_char_emb', default = False)
     parser.add_argument('--number_normalized', default = True)
@@ -498,7 +497,7 @@ if __name__ == '__main__':
     parser.add_argument('--whether_clip_grad', default=True)
     parser.add_argument('--clip_grad', default=5)
     parser.add_argument('--l2', default=1e-8)
-    parser.add_argument('--gpu', default=False)
+    parser.add_argument('--gpu', default=True)
     parser.add_argument('--seed',default=42)
 
 
