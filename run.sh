@@ -1,0 +1,1 @@
+python main.py --model_dir ./sample/label_embedding --train_dir ./sample/train.bmes --dev_dir ./sample/dev.bmes --test_dir ./sample/test.bmes --word_emb_dir ./sample/sample.word.emb --gpu False

@@ -7,8 +7,6 @@ from .charbilstm import CharBiLSTM
 from .charbigru import CharBiGRU
 from .charcnn import CharCNN
 
-import torch.autograd as autograd
-
 
 class WordRep(nn.Module):
     def __init__(self, data):

@@ -265,7 +265,6 @@ def batchify_with_label(input_batch_list, gpu,label_size = 20, volatile_flag=Fal
 
 def train(data):
     print("Training model...")
-    writer = SummaryWriter('runs')
     data.show_data_summary()
     save_data_name = data.model_dir +".dset"
     data.save(save_data_name)
@@ -355,7 +354,6 @@ def train(data):
                 clip_grad_norm(model.parameters(), data.clip_grad)
             optimizer.step()
             model.zero_grad()
-        writer.add_scalar('Train', total_loss, idx)
         temp_time = time.time()
         temp_cost = temp_time - temp_start
         print("     Instance: %s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f"%(end, temp_cost, sample_loss, right_token, whole_token,(right_token+0.)/whole_token))
@@ -371,8 +369,6 @@ def train(data):
         speed, acc, p, r, f, _,_ = evaluate(data, model, "dev")
         dev_finish = time.time()
         dev_cost = dev_finish - epoch_finish
-
-        writer.add_scalar('Dev', acc, idx)
 
         if data.seg:
             current_score = f
@@ -390,8 +386,6 @@ def train(data):
             print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(test_cost, speed, acc_test, p, r, f_test))
         else:
             print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f"%(test_cost, speed, acc_test))
-
-        writer.add_scalar('Test', acc_test, idx)
 
         if current_score > best_dev:
             if data.seg:
@@ -424,16 +418,6 @@ def train(data):
             print ("Current best acc score in dev",best_dev)
             print ("Current best acc score in test",best_test)
         gc.collect()
-
-    writer.close()
-    import csv
-    # with open("without_embedd.csv", "a", encoding='utf8', newline='') as c:
-    #     writer = csv.writer(c)
-    #     writer.writerow([data.label_embedding_scale,data.clip_grad,str(data.use_crf),data.HP_momentum,data.HP_hidden_dim,data.HP_lstm_layer,data.HP_lr,data.HP_lr_decay,data.HP_dropout,best_epoch,best_dev,best_test])
-    with open(save_file, "a", encoding='utf8', newline='') as c:
-        writer = csv.writer(c)
-        writer.writerow([best_epoch,best_dev,best_test])
-
 
 
 def load_model_decode(data, name):
@@ -471,12 +455,10 @@ if __name__ == '__main__':
     parser.add_argument('--train_dir', default='wsj_pos/train.pos', help='train_file')
     parser.add_argument('--dev_dir', default='wsj_pos/dev.pos', help='dev_file')
     parser.add_argument('--test_dir', default='wsj_pos/test.pos', help='test_file')
-    parser.add_argument('--model_dir', default='wsj_pos/label_embedding', help='model_file')
+    parser.add_argument('--model_dir', default='./sample/label_embedding', help='model_file')
+    # parser.add_argument('--model_dir', default='wsj_pos/label_embedding', help='model_file')
     parser.add_argument('--seg', default=False)
 
-
-    #embeddings-scaled.EMBEDDING_SIZE=50.txt
-    #parser.add_argument('--word_emb_dir', default='embeddings-scaled.EMBEDDING_SIZE=50.txt', help='word_emb_dir')
     parser.add_argument('--word_emb_dir', default='glove.6B.100d.txt', help='word_emb_dir')
     #parser.add_argument('--word_emb_dir', default='', help='word_emb_dir')
     parser.add_argument('--norm_word_emb', default = False)
@@ -516,7 +498,7 @@ if __name__ == '__main__':
     parser.add_argument('--whether_clip_grad', default=True)
     parser.add_argument('--clip_grad', default=5)
     parser.add_argument('--l2', default=1e-8)
-    parser.add_argument('--gpu', default=True)
+    parser.add_argument('--gpu', default=False)
     parser.add_argument('--seed',default=42)
 
 

@@ -117,7 +117,7 @@ class positional_encoding(nn.Module):
 
 class multihead_attention(nn.Module):
 
-    def __init__(self, num_units, num_heads=1, dropout_rate=0, causality=False):
+    def __init__(self, num_units, num_heads=1, dropout_rate=0, gpu=True, causality=False):
         '''Applies multihead attention.
         Args:
             num_units: A scalar. Attention size.
@@ -166,17 +166,6 @@ class multihead_attention(nn.Module):
         condition = key_masks.eq(0.).float()
         outputs = padding.cuda() * condition.cuda() + outputs.cuda() * (1. - condition.cuda())
 
-        # Causality = Future blinding
-        # if self.causality:
-        #     diag_vals = torch.ones(*outputs[0, :, :].size()).cuda()  # (T_q, T_k)
-        #     tril = torch.tril(diag_vals, diagonal=0)  # (T_q, T_k)
-        #     # print(tril)
-        #     masks = Variable(torch.unsqueeze(tril, 0).repeat(outputs.size()[0], 1, 1))  # (h*N, T_q, T_k)
-        #
-        #     padding = Variable(torch.ones(*masks.size()).cuda() * (-2 ** 32 + 1))
-        #     condition = masks.eq(0.).float()
-        #     outputs = padding * condition + outputs * (1. - condition)
-
         # Activation
         if last_layer == False:
             outputs = F.softmax(outputs, dim=-1)  # (h*N, T_q, T_k)
@@ -204,9 +193,6 @@ class multihead_attention(nn.Module):
         # Residual connection
         outputs += queries.cuda()
 
-        # Normalize
-        #outputs = self.normalization(outputs)  # (N, T_q, C)
-        #return outputs
         return outputs
 
 
@@ -252,28 +238,3 @@ class feedforward(nn.Module):
             outputs = self.normalization(outputs)
 
         return outputs
-
-
-class label_smoothing(nn.Module):
-
-    def __init__(self, epsilon=0.1):
-        '''Applies label smoothing. See https://arxiv.org/abs/1512.00567.
-        Args:
-            epsilon: Smoothing rate.
-        '''
-        super(label_smoothing, self).__init__()
-        self.epsilon = epsilon
-
-    def forward(self, inputs):
-        K = inputs.size()[-1]
-        return ((1 - self.epsilon) * inputs) + (self.epsilon / K)
-
-
-if __name__ == '__main__':
-    num_units = 512
-    inputs = Variable(torch.randn((100, 10)))
-    outputs = positional_encoding(num_units)(inputs)
-    outputs = multihead_attention(num_units)(outputs, outputs, outputs)
-    outputs = feedforward(num_units)(outputs)
-
-    print(outputs)

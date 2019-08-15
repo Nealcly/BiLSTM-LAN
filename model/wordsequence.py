@@ -58,9 +58,9 @@ class WordSequence(nn.Module):
                 self.cnn_drop_list.append(nn.Dropout(data.HP_dropout))
                 self.cnn_batchnorm_list.append(nn.BatchNorm1d(data.HP_hidden_dim))
 
-        self.self_attention_first = multihead_attention(data.HP_hidden_dim,num_heads=data.num_attention_head, dropout_rate=data.HP_dropout)
+        self.self_attention_first = multihead_attention(data.HP_hidden_dim,num_heads=data.num_attention_head, dropout_rate=data.HP_dropout, gpu=self.gpu)
         # DO NOT Add dropout at last layer
-        self.self_attention_last = multihead_attention(data.HP_hidden_dim,num_heads=1, dropout_rate=0)
+        self.self_attention_last = multihead_attention(data.HP_hidden_dim,num_heads=1, dropout_rate=0, gpu=self.gpu)
         self.lstm_attention_stack =  nn.ModuleList([LSTM_attention(lstm_hidden,self.bilstm_flag,data) for _ in range(int(self.num_of_lstm_layer))])
         #highway encoding
         #self.highway_encoding = HighwayEncoding(data,data.HP_hidden_dim,activation_function=F.relu)
@@ -69,18 +69,11 @@ class WordSequence(nn.Module):
 
         if self.gpu:
             self.droplstm = self.droplstm.cuda()
-            if self.word_feature_extractor == "CNN":
-                self.word2cnn = self.word2cnn.cuda()
-                for idx in range(self.cnn_layer):
-                    self.cnn_list[idx] = self.cnn_list[idx].cuda()
-                    self.cnn_drop_list[idx] = self.cnn_drop_list[idx].cuda()
-                    self.cnn_batchnorm_list[idx] = self.cnn_batchnorm_list[idx].cuda()
-            else:
-                self.lstm = self.lstm.cuda()
-                self.lstm_layer = self.lstm_layer.cuda()
-                self.self_attention_first = self.self_attention_first.cuda()
-                self.self_attention_last = self.self_attention_last.cuda()
-                self.lstm_attention_stack = self.lstm_attention_stack.cuda()
+            self.lstm = self.lstm.cuda()
+            self.lstm_layer = self.lstm_layer.cuda()
+            self.self_attention_first = self.self_attention_first.cuda()
+            self.self_attention_last = self.self_attention_last.cuda()
+            self.lstm_attention_stack = self.lstm_attention_stack.cuda()
 
 
     def forward(self, word_inputs, feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover, input_label_seq_tensor):
@@ -97,59 +90,34 @@ class WordSequence(nn.Module):
         """
         word_represent, label_embs = self.wordrep(word_inputs,feature_inputs, word_seq_lengths, char_inputs, char_seq_lengths, char_seq_recover,input_label_seq_tensor)
         #word_represent shape [batch_size,seq_length,word_embedding_dim+char_hidden_dim]
-        ## word_embs (batch_size, seq_len, embed_size)
+        # word_embs (batch_size, seq_len, embed_size)
+        # label_embs = self.highway_encoding(label_embs)
+        """
+        First LSTM layer
+        """
+        lstm_out = word_represent
+        lstm_out = pack_padded_sequence(input=lstm_out, lengths=word_seq_lengths.cpu().numpy(), batch_first=True)
+        hidden = None
+        lstm_out, hidden = self.lstm(lstm_out, hidden)
+        lstm_out, _ = pad_packed_sequence(lstm_out)
+        # shape [seq_len, batch, hidden_size]
+        lstm_out = self.droplstm(lstm_out.transpose(1, 0))
+        attention_label = self.self_attention_first(lstm_out, label_embs, label_embs)
+        # shape [batch_size,seq_length,embedding_dim]
+        lstm_out = torch.cat([lstm_out, attention_label], -1)
+        #shape [batch_size,seq_length,embedding_dim + label_embeeding_dim]
+        for layer in self.lstm_attention_stack:
+            lstm_out = layer(lstm_out,label_embs,word_seq_lengths,hidden)
 
-        #label_embs = self.highway_encoding(label_embs)
-
-        if self.word_feature_extractor == "CNN":
-            word_in = F.tanh(self.word2cnn(word_represent)).transpose(2,1).contiguous()
-            for idx in range(self.cnn_layer):
-                if idx == 0:
-                    cnn_feature = F.relu(self.cnn_list[idx](word_in))
-                else:
-                    cnn_feature = F.relu(self.cnn_list[idx](cnn_feature))
-                cnn_feature = self.cnn_drop_list[idx](cnn_feature)
-                cnn_feature = self.cnn_batchnorm_list[idx](cnn_feature)
-            feature_out = cnn_feature.transpose(2,1).contiguous()
-        else:
-            """
-            First LSTM layer
-            """
-            lstm_out = word_represent
-            lstm_out = pack_padded_sequence(input=lstm_out, lengths=word_seq_lengths.cpu().numpy(), batch_first=True)
-            hidden = None
-            lstm_out, hidden = self.lstm(lstm_out, hidden)
-            lstm_out, _ = pad_packed_sequence(lstm_out)
-            # shape [seq_len, batch, hidden_size]　52x10x200
-            lstm_out = self.droplstm(lstm_out.transpose(1, 0))
-            # lstm_out shape [batch, seq_len, hidden_size]
-            # label_embs shape [batch, label_size, label_embedding_dim]
-            # lstm_out = lstm_out.transpose(1, 2)
-            # label_embs = label_embs.transpose(1, 2)
-            # lstm_out shape [batch, hidden_size, seq_len]
-            # label_embs shape [batch, label_embedding_dim, label_size]
-
-            attention_label = self.self_attention_first(lstm_out, label_embs, label_embs)
-            # shape [batch_size,seq_length,embedding_dim] 10x52x200
-            lstm_out = torch.cat([lstm_out, attention_label], -1)
-            #shape [batch_size,seq_length,embedding_dim + label_embeeding_dim]
-            #10x52x400
-
-
-            for layer in self.lstm_attention_stack:
-                lstm_out = layer(lstm_out,label_embs,word_seq_lengths,hidden)
-
-            """
-            Last Layer 
-            Attention weight calculate loss
-            """
-            lstm_out = pack_padded_sequence(input=lstm_out, lengths=word_seq_lengths.cpu().numpy(), batch_first=True)
-            lstm_out, hidden = self.lstm_layer(lstm_out, hidden)
-            lstm_out, _ = pad_packed_sequence(lstm_out)
-            lstm_out = self.droplstm(lstm_out.transpose(1, 0))
-            lstm_out = self.self_attention_last(lstm_out, label_embs, label_embs,True)
-
-            # 10x52x20
+        """
+        Last Layer 
+        Attention weight calculate loss
+        """
+        lstm_out = pack_padded_sequence(input=lstm_out, lengths=word_seq_lengths.cpu().numpy(), batch_first=True)
+        lstm_out, hidden = self.lstm_layer(lstm_out, hidden)
+        lstm_out, _ = pad_packed_sequence(lstm_out)
+        lstm_out = self.droplstm(lstm_out.transpose(1, 0))
+        lstm_out = self.self_attention_last(lstm_out, label_embs, label_embs,True)
 
         return lstm_out
 
