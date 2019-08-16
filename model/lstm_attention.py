@@ -8,30 +8,28 @@ from torch.autograd import *
 
 class LSTM_attention(nn.Module):
     ''' Compose with two layers '''
-
     def __init__(self,lstm_hidden,bilstm_flag,data):
         super(LSTM_attention, self).__init__()
 
         self.lstm = nn.LSTM(lstm_hidden * 4, lstm_hidden, num_layers=1, batch_first=True, bidirectional=bilstm_flag)
         #self.slf_attn = multihead_attention(data.HP_hidden_dim,num_heads = data.num_attention_head, dropout_rate=data.HP_dropout)
-        self.slf_attn = multihead_attention(data.HP_hidden_dim, num_heads=data.num_attention_head,dropout_rate=data.HP_dropout)
+        self.label_attn = multihead_attention(data.HP_hidden_dim, num_heads=data.num_attention_head,dropout_rate=data.HP_dropout)
         self.droplstm = nn.Dropout(data.HP_dropout)
         self.gpu = data.HP_gpu
         if self.gpu:
             self.lstm =self.lstm.cuda()
-            self.slf_attn = self.slf_attn.cuda()
+            self.label_attn = self.label_attn.cuda()
 
 
     def forward(self,lstm_out,label_embs,word_seq_lengths,hidden):
-
         lstm_out = pack_padded_sequence(input=lstm_out, lengths=word_seq_lengths.cpu().numpy(), batch_first=True)
         lstm_out, hidden = self.lstm(lstm_out, hidden)
         lstm_out, _ = pad_packed_sequence(lstm_out)
         lstm_out = self.droplstm(lstm_out.transpose(1, 0))
-        # label_embs (seq_length * batch_size * hidden)
-        attention_label = self.slf_attn(lstm_out, label_embs, label_embs)
-        # batch_size, seq_length, hidden
-        lstm_out = torch.cat([lstm_out, attention_label], -1)
+        # lstm_out (seq_length * batch_size * hidden)
+        label_attention_output = self.label_attn(lstm_out, label_embs, label_embs)
+        # label_attention_output (batch_size, seq_len, embed_size)
+        lstm_out = torch.cat([lstm_out, label_attention_output], -1)
         return lstm_out
 
 class multihead_attention(nn.Module):

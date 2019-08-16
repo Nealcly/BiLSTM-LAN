@@ -19,7 +19,6 @@ class WordSequence(nn.Module):
         #word embedding
         self.wordrep = WordRep(data)
 
-
         self.input_size = data.word_emb_dim
         if self.use_char:
             self.input_size += data.HP_char_hidden_dim
@@ -35,26 +34,11 @@ class WordSequence(nn.Module):
             lstm_hidden = data.HP_hidden_dim
 
         self.word_feature_extractor = data.word_feature_extractor
-        if self.word_feature_extractor == "GRU":
-            self.lstm = nn.GRU(self.input_size, lstm_hidden, num_layers=1, batch_first=True, bidirectional=self.bilstm_flag)
-        elif self.word_feature_extractor == "LSTM":
-            self.lstm = nn.LSTM(self.input_size, lstm_hidden, num_layers=1, batch_first=True, bidirectional=self.bilstm_flag)
-            self.lstm_layer = nn.LSTM(lstm_hidden * 4, lstm_hidden, num_layers=1, batch_first=True, bidirectional=self.bilstm_flag)
-        elif self.word_feature_extractor == "CNN":
-            # cnn_hidden = data.HP_hidden_dim
-            self.word2cnn = nn.Linear(self.input_size, data.HP_hidden_dim)
-            self.cnn_layer = data.HP_cnn_layer
-            print("CNN layer: ", self.cnn_layer)
-            self.cnn_list = nn.ModuleList()
-            self.cnn_drop_list = nn.ModuleList()
-            self.cnn_batchnorm_list = nn.ModuleList()
-            kernel = 3
-            pad_size = (kernel-1)/2
-            for idx in range(self.cnn_layer):
-                self.cnn_list.append(nn.Conv1d(data.HP_hidden_dim, data.HP_hidden_dim, kernel_size=kernel, padding=pad_size))
-                self.cnn_drop_list.append(nn.Dropout(data.HP_dropout))
-                self.cnn_batchnorm_list.append(nn.BatchNorm1d(data.HP_hidden_dim))
 
+        self.lstm_first = nn.LSTM(self.input_size, lstm_hidden, num_layers=1, batch_first=True,
+                            bidirectional=self.bilstm_flag)
+        self.lstm_layer = nn.LSTM(lstm_hidden * 4, lstm_hidden, num_layers=1, batch_first=True,
+                                  bidirectional=self.bilstm_flag)
         self.self_attention_first = multihead_attention(data.HP_hidden_dim,num_heads=data.num_attention_head, dropout_rate=data.HP_dropout, gpu=self.gpu)
         # DO NOT Add dropout at last layer
         self.self_attention_last = multihead_attention(data.HP_hidden_dim,num_heads=1, dropout_rate=0, gpu=self.gpu)
@@ -62,11 +46,9 @@ class WordSequence(nn.Module):
         #highway encoding
         #self.highway_encoding = HighwayEncoding(data,data.HP_hidden_dim,activation_function=F.relu)
 
-
-
         if self.gpu:
             self.droplstm = self.droplstm.cuda()
-            self.lstm = self.lstm.cuda()
+            self.lstm_first = self.lstm_first.cuda()
             self.lstm_layer = self.lstm_layer.cuda()
             self.self_attention_first = self.self_attention_first.cuda()
             self.self_attention_last = self.self_attention_last.cuda()
@@ -90,12 +72,12 @@ class WordSequence(nn.Module):
         # word_embs (batch_size, seq_len, embed_size)
         # label_embs = self.highway_encoding(label_embs)
         """
-        First LSTM layer
+        First LSTM layer (input word only)
         """
         lstm_out = word_represent
         lstm_out = pack_padded_sequence(input=lstm_out, lengths=word_seq_lengths.cpu().numpy(), batch_first=True)
         hidden = None
-        lstm_out, hidden = self.lstm(lstm_out, hidden)
+        lstm_out, hidden = self.lstm_first(lstm_out, hidden)
         lstm_out, _ = pad_packed_sequence(lstm_out)
         # shape [seq_len, batch, hidden_size]
         lstm_out = self.droplstm(lstm_out.transpose(1, 0))
@@ -104,8 +86,9 @@ class WordSequence(nn.Module):
         lstm_out = torch.cat([lstm_out, attention_label], -1)
         #shape [batch_size, seq_length, embedding_dim + label_embeeding_dim]
 
+        # LAN layer
         for layer in self.lstm_attention_stack:
-            lstm_out = layer(lstm_out,label_embs,word_seq_lengths,hidden)
+            lstm_out = layer(lstm_out, label_embs, word_seq_lengths, hidden)
         """
         Last Layer 
         Attention weight calculate loss
@@ -114,6 +97,6 @@ class WordSequence(nn.Module):
         lstm_out, hidden = self.lstm_layer(lstm_out, hidden)
         lstm_out, _ = pad_packed_sequence(lstm_out)
         lstm_out = self.droplstm(lstm_out.transpose(1, 0))
-        lstm_out = self.self_attention_last(lstm_out, label_embs, label_embs,True)
+        lstm_out = self.self_attention_last(lstm_out, label_embs, label_embs, True)
         return lstm_out
 

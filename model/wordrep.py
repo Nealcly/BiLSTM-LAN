@@ -103,7 +103,7 @@ class WordRep(nn.Module):
                 char_inputs: (batch_size*sent_len, word_length)
                 char_seq_lengths: list of whole batch_size for char, (batch_size*sent_len, 1)
                 char_seq_recover: variable which records the char order information, used to recover char order
-                input_label_seq_tensor: (batch_size,number of label)
+                input_label_seq_tensor: (batch_size, number of label)
             output:
                 Variable(batch_size, sent_len, hidden_dim)
         """
@@ -123,7 +123,7 @@ class WordRep(nn.Module):
             char_features = char_features.view(batch_size, sent_len, -1)
             ## concat word and char together
             word_list.append(char_features)
-            word_embs = torch.cat([word_embs, char_features], 2)
+            # word_embs = torch.cat([word_embs, char_features], 2)
             if self.char_all_feature:
                 char_features_extra = self.char_feature_extra.get_last_hiddens(char_inputs,
                                                                                char_seq_lengths.cpu().numpy())
@@ -133,5 +133,5 @@ class WordRep(nn.Module):
                 word_list.append(char_features_extra)
         word_embs = torch.cat(word_list, 2)
         word_represent = self.drop(word_embs)
-        #label_embs = self.drop(label_embs)
+        # label_embs = self.drop(label_embs)
         return word_represent, label_embs
