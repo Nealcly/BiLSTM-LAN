@@ -5,7 +5,7 @@
 * Python3
 * PyTorch: 0.3
 
-# Revisit our performance
+# Train models
 * Download data and word embedding
 * Run the script:
 ```
