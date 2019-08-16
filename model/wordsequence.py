@@ -1,13 +1,10 @@
-from __future__ import print_function
-from __future__ import absolute_import
 import torch.nn as nn
 import torch
-import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from .wordrep import WordRep
-from lstm_attention import LSTM_attention
-from attention import multihead_attention
-from highway import HighwayEncoding
+from model.lstm_attention import LSTM_attention, multihead_attention
+
+
 class WordSequence(nn.Module):
     def __init__(self, data):
         super(WordSequence, self).__init__()

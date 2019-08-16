@@ -79,7 +79,6 @@ class multihead_attention(nn.Module):
         # Dropouts
         outputs = self.output_dropout(outputs)  # (h*N, T_q, T_k)
         if last_layer == True:
-            #outputs = F.softmax(outputs, dim=-2)
             return outputs
         # Weighted sum
         outputs = torch.bmm(outputs, V_)  # (h*N, T_q, C/h)
