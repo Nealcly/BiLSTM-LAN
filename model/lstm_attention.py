@@ -16,9 +16,10 @@ class LSTM_attention(nn.Module):
         #self.slf_attn = multihead_attention(data.HP_hidden_dim,num_heads = data.num_attention_head, dropout_rate=data.HP_dropout)
         self.slf_attn = multihead_attention(data.HP_hidden_dim, num_heads=data.num_attention_head,dropout_rate=data.HP_dropout)
         self.droplstm = nn.Dropout(data.HP_dropout)
-        #gpu
-        self.lstm =self.lstm.cuda()
-        self.slf_attn = self.slf_attn.cuda()
+        self.gpu = data.HP_gpu
+        if self.gpu:
+            self.lstm =self.lstm.cuda()
+            self.slf_attn = self.slf_attn.cuda()
 
 
     def forward(self,lstm_out,label_embs,word_seq_lengths,hidden):
