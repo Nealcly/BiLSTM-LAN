@@ -1,4 +1,4 @@
-# LAN
+# BiLSTM - Label Attention Network
  Hierarchically-Refined Label Attention Network for Sequence Labeling (EMNLP 2019)
  
 # Requirement
