@@ -24,4 +24,4 @@ python main.py --learning_rate 0.01 --lr_decay 0.035 --dropout 0.5 --hidden_dim 
 |4| CCG |  CCGBank | 94.7
 
 # Acknowledgments
-NCRF++ (https://github.com/jiesutd/NCRFpp)
+[NCRF++](https://github.com/jiesutd/NCRFpp)
