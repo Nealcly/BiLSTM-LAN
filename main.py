@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Jie
-# @Date:   2017-06-15 14:11:08
-# @Last Modified by:   Jie Yang,     Contact: jieynlp@gmail.com
-# @Last Modified time: 2018-09-05 23:05:26
-
 from __future__ import print_function
 import time
 import sys

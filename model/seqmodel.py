@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Jie Yang
-# @Date:   2017-10-17 16:47:32
-# @Last Modified by:   Jie Yang,     Contact: jieynlp@gmail.com
-# @Last Modified time: 2018-03-30 16:20:07
-
 from __future__ import print_function
 from __future__ import absolute_import
 import torch
