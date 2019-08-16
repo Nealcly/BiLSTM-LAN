@@ -23,5 +23,5 @@ python main.py --learning_rate 0.01 --lr_decay 0.035 --dropout 0.5 --hidden_dim 
 |3| NER |  OntoNotes 5.0 | 88.16
 |4| CCG |  CCGBank | 94.7
 
-# Acknowledge
+# Acknowledgments
 NCRF++ (https://github.com/jiesutd/NCRFpp)
