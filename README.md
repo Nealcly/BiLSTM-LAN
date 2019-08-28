@@ -1,5 +1,5 @@
 # BiLSTM - Label Attention Network
- Hierarchically-Refined Label Attention Network for Sequence Labeling (EMNLP 2019)
+ [Hierarchically-Refined Label Attention Network for Sequence Labeling](https://arxiv.org/pdf/1908.08676.pdf) (EMNLP 2019)
  
 # Requirement
 * Python3
