@@ -32,10 +32,9 @@ python main.py --learning_rate 0.01 --lr_decay 0.035 --dropout 0.5 --hidden_dim 
 |4| CCG |  CCGBank | 94.7
 
 # Cite
-```
+
 Leyang Cui and Yue Zhang Hierarchically-Refined Label Attention Network for Sequence Labeling. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing (EMNLP) and 9th International Joint Conference on Natural Language Processing (IJCNLP) in Hong Kong, China.
 
-```
 
 # Acknowledgments
 [NCRF++](https://github.com/jiesutd/NCRFpp)
