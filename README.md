@@ -4,7 +4,8 @@
 
 # Model Structure
 
-![alt text](model.pdf "model")
+<img src="model.pdf" width="633" >
+
 
 # Requirement
 * Python3
