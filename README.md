@@ -4,7 +4,7 @@
 
 # Model Structure
 
-The model consists of 2 BiLSTM-LAN layers. Each BiLSTM-LAN layer is composed of a BiLSTM encoding sublayer and a label-attention inference sublayer.  In paticular, the former is the same as the BiLSTM layer in the baseline model, while the latter uses multihead attention (Vaswani et al., 2017) to jointly encode information from the word representation subspace and the label representation subspace.
+The model consists of two BiLSTM-LAN layers. Each BiLSTM-LAN layer is composed of a BiLSTM encoding sublayer and a label-attention inference sublayer.  In paticular, the former is the same as the BiLSTM layer in the baseline model, while the latter uses multihead attention to jointly encode information from the word representation subspace and the label representation subspace.
 
 <img src="model.jpg" width="1000" >
 
