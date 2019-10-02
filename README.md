@@ -4,7 +4,7 @@
 
 # Model Structure
 
-<img src="model.jpg" width="633" >
+<img src="model.jpg" width="1000" >
 
 
 # Requirement
