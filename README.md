@@ -36,5 +36,21 @@ python main.py --learning_rate 0.01 --lr_decay 0.035 --dropout 0.5 --hidden_dim 
 Leyang Cui and Yue Zhang Hierarchically-Refined Label Attention Network for Sequence Labeling. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing (EMNLP) and 9th International Joint Conference on Natural Language Processing (IJCNLP) in Hong Kong, China.
 
 
+```
+@inproceedings{cui-zhang-2019-hierarchically,
+    title = "Hierarchically-Refined Label Attention Network for Sequence Labeling",
+    author = "Cui, Leyang  and
+      Zhang, Yue",
+    booktitle = "Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)",
+    month = nov,
+    year = "2019",
+    address = "Hong Kong, China",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/D19-1422",
+    pages = "4106--4119",
+}
+```
+
+
 # Acknowledgments
 [NCRF++](https://github.com/jiesutd/NCRFpp)
