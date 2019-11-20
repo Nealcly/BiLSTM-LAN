@@ -74,18 +74,7 @@ class multihead_attention(nn.Module):
         outputs = torch.bmm(Q_, K_.permute(0, 2, 1))  # (h*N, T_q, T_k)
         # Scale
         outputs = outputs / (K_.size()[-1] ** 0.5)
-        # Key Masking
-        key_masks = torch.sign(torch.abs(torch.sum(keys, dim=-1)))  # (N, T_k)
-        key_masks = key_masks.repeat(self.num_heads, 1)  # (h*N, T_k)
-        key_masks = torch.unsqueeze(key_masks, 1).repeat(1, queries.size()[1], 1)  # (h*N, T_q, T_k)
 
-
-        padding = Variable(torch.ones(*outputs.size()) * (-2 ** 32 + 1))
-        condition = key_masks.eq(0.).float()
-        if self.gpu:
-            padding = padding.cuda()
-            condition = condition.cuda()
-        outputs = padding * condition + outputs * (1. - condition)
         # Activation
         if last_layer == False:
             outputs = F.softmax(outputs, dim=-1)  # (h*N, T_q, T_k)
