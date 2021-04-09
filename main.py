@@ -167,6 +167,20 @@ def evaluate(data, model, name, nbest=None):
         gold_results += gold_label
     decode_time = time.time() - start_time
     speed = len(instances)/decode_time
+
+    gold_ = []
+    pred_ = []
+
+    for it_ in gold_results:
+        for it_2 in it_:
+            gold_.append(it_2) 
+
+    for it_ in pred_results:
+        for it_2 in it_:
+            pred_.append(it_2) 
+
+    print(classification_report(gold_, pred_))
+    
     acc, p, r, f = get_ner_fmeasure(gold_results, pred_results, data.tagScheme)
     if nbest:
         return speed, acc, p, r, f, nbest_pred_results, pred_scores
