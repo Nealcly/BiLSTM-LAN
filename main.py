@@ -328,8 +328,8 @@ def train(data):
             right, whole = predict_check(tag_seq, batch_label, mask)
             right_token += right
             whole_token += whole
-            sample_loss += loss.data[0]
-            total_loss += loss.data[0]
+            sample_loss += loss.item()
+            total_loss += loss.item()
             if end%500 == 0:
                 # temp_time = time.time()
                 # temp_cost = temp_time - temp_start
